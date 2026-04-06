@@ -7,7 +7,7 @@ import { cn } from '../lib/utils';
 interface PlannerProps {
   prioritySubject: Subject | null;
   dailyPlan: Activity[];
-  onStartFocus: (subjectId: string) => void;
+  onStartFocus: (subjectId: string, topicId?: string) => void;
   onViewFullSchedule: () => void;
 }
 
@@ -17,38 +17,42 @@ export default function Planner({ prioritySubject, dailyPlan, onStartFocus, onVi
   return (
     <div className="space-y-4 md:space-y-6 animate-in fade-in slide-in-from-top-4 duration-700">
       {/* AI Planner Card */}
-      <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-[#1DB954] to-[#191414] p-6 md:p-8 shadow-2xl group">
-        <div className="absolute top-0 right-0 p-8 md:p-12 opacity-10 group-hover:scale-110 transition-transform duration-700">
+      <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-[#1DB954] via-[#1DB954]/80 to-[#191414] p-6 md:p-8 shadow-[0_20px_50px_rgba(29,185,84,0.2)] group">
+        <div className="absolute top-0 right-0 p-8 md:p-12 opacity-10 group-hover:scale-110 group-hover:rotate-12 transition-all duration-1000">
           <Zap className="w-32 h-32 md:w-48 md:h-48 text-white" />
         </div>
         
         <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-4 md:mb-6">
-            <div className="px-2 py-0.5 md:px-3 md:py-1 bg-black/20 backdrop-blur-md rounded-full text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-white">
+          <div className="flex flex-wrap items-center gap-2 mb-4 md:mb-6">
+            <div className="px-3 py-1 bg-black/30 backdrop-blur-xl rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-white border border-white/10">
               AI Study Planner
             </div>
             {prioritySubject && (
-              <div className="px-2 py-0.5 md:px-3 md:py-1 bg-white/20 backdrop-blur-md rounded-full text-[8px] md:text-[10px] font-bold uppercase tracking-widest text-white">
+              <div className="px-3 py-1 bg-white/20 backdrop-blur-xl rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-white border border-white/10">
                 Priority: {prioritySubject.name}
               </div>
             )}
           </div>
 
-          <h2 className="text-2xl md:text-4xl font-black mb-2 md:mb-4 tracking-tight">Your Daily Focus Plan</h2>
-          <p className="text-sm md:text-lg text-white/80 mb-6 md:mb-8 max-w-xl">
+          <h2 className="text-3xl md:text-5xl font-black mb-3 md:mb-5 tracking-tighter leading-none">Your Daily Focus Plan</h2>
+          <p className="text-sm md:text-xl text-white/90 mb-8 md:mb-10 max-w-2xl font-medium leading-relaxed">
             Based on your weekly schedule and current mastery, we've optimized your blocks for maximum retention.
           </p>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             {['Deep Work', 'Weak Topic', 'Timed Practice', 'Revision'].map((label, i) => (
-              <div key={label} className="bg-white/10 backdrop-blur-md rounded-xl md:rounded-2xl p-3 md:p-4 border border-white/10 hover:bg-white/20 transition-all cursor-default">
-                <div className="flex items-center justify-between mb-1 md:mb-2">
-                  <span className="text-[8px] md:text-[10px] font-bold uppercase text-white/60">Block {i + 1}</span>
-                  <Clock className="w-3 h-3 text-white/60" />
+              <motion.div 
+                key={label} 
+                whileHover={{ y: -5, backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
+                className="bg-white/10 backdrop-blur-xl rounded-xl md:rounded-2xl p-4 md:p-5 border border-white/10 transition-all cursor-default shadow-lg"
+              >
+                <div className="flex items-center justify-between mb-2 md:mb-3">
+                  <span className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-white/70">Block {i + 1}</span>
+                  <Clock className="w-3.5 h-3.5 text-white/70" />
                 </div>
-                <p className="font-bold text-sm md:text-lg">{label}</p>
-                <p className="text-[10px] text-white/60 mt-0.5 md:mt-1">90 Min Sprint</p>
-              </div>
+                <p className="font-black text-sm md:text-xl tracking-tight">{label}</p>
+                <p className="text-[10px] md:text-xs text-white/70 mt-1 md:mt-1.5 font-bold">90 Min Sprint</p>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -109,9 +113,9 @@ export default function Planner({ prioritySubject, dailyPlan, onStartFocus, onVi
               {activity.type === 'study' && (
                 <button 
                   onClick={() => onStartFocus(prioritySubject?.id || '')}
-                  className="w-8 h-8 md:w-10 md:h-10 bg-[#1DB954] rounded-full flex items-center justify-center md:opacity-0 group-hover:opacity-100 transition-all transform md:translate-x-4 group-hover:translate-x-0 shrink-0"
+                  className="w-11 h-11 md:w-10 md:h-10 bg-[#1DB954] rounded-full flex items-center justify-center md:opacity-0 group-hover:opacity-100 transition-all transform md:translate-x-4 group-hover:translate-x-0 shrink-0"
                 >
-                  <Play className="w-3 h-3 md:w-4 md:h-4 text-black fill-current ml-0.5" />
+                  <Play className="w-4 h-4 md:w-4 md:h-4 text-black fill-current ml-0.5" />
                 </button>
               )}
               

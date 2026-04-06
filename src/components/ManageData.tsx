@@ -440,8 +440,16 @@ export default function ManageData({
                   <div key={s.id} className="bg-[#181818] rounded-2xl border border-white/5 overflow-hidden">
                     <div className="p-4 flex items-center justify-between hover:bg-white/5 transition-colors">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-white/10 overflow-hidden">
-                          <img src={s.image || `https://picsum.photos/seed/${s.id}/100/100`} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        <div className="w-10 h-10 rounded-lg bg-white/10 overflow-hidden relative">
+                          <img 
+                            src={s.image || `https://picsum.photos/seed/${s.id}/100/100`} 
+                            alt="" 
+                            className="w-full h-full object-cover transition-opacity duration-500" 
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${s.id}/100/100`;
+                            }}
+                            referrerPolicy="no-referrer" 
+                          />
                         </div>
                         {editingSubject === s.id ? (
                           <div className="flex items-center gap-2">
@@ -603,7 +611,17 @@ export default function ManageData({
                                     ) : (
                                       <div className="flex items-center gap-3">
                                         {topic.image && (
-                                          <img src={topic.image} alt="" className="w-8 h-8 rounded object-cover" referrerPolicy="no-referrer" />
+                                          <div className="w-10 h-10 rounded-lg overflow-hidden bg-white/5 relative">
+                                            <img 
+                                              src={topic.image} 
+                                              alt="" 
+                                              className="w-full h-full object-cover transition-opacity duration-500" 
+                                              onError={(e) => {
+                                                (e.target as HTMLImageElement).src = `https://picsum.photos/seed/${topic.id}/100/100`;
+                                              }}
+                                              referrerPolicy="no-referrer" 
+                                            />
+                                          </div>
                                         )}
                                         <p className="text-sm font-bold">{topic.title}</p>
                                       </div>

@@ -1,23 +1,37 @@
-import React from 'react';
-import { Home, BarChart2, Calendar, AlertCircle, Library, Plus, Search, Settings, Trophy } from 'lucide-react';
+import React, { useState } from 'react';
+import { Home, BarChart2, Calendar, AlertCircle, Library, Plus, Search, Settings, Trophy, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Link, useLocation } from 'react-router-dom';
+
+import { Subject } from '../types';
+import Logo from './Logo';
+import ImageWithFallback from './ImageWithFallback';
 
 interface SidebarProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+  subjects: Subject[];
+  onSubjectClick: (id: string) => void;
 }
 
-export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
+export default function Sidebar({ subjects, onSubjectClick }: SidebarProps) {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const location = useLocation();
+
   const menuItems = [
-    { id: 'home', icon: Home, label: 'Home' },
-    { id: 'analytics', icon: BarChart2, label: 'Analytics' },
-    { id: 'schedule', icon: Calendar, label: 'Schedule' },
-    { id: 'syllabus', icon: Library, label: 'Syllabus' },
-    { id: 'weak-areas', icon: AlertCircle, label: 'Weak Areas' },
-    { id: 'achievements', icon: Trophy, label: 'Achievements' },
-    { id: 'manage', icon: Settings, label: 'Manage' },
+    { id: 'home', icon: Home, label: 'Home', path: '/' },
+    { id: 'analytics', icon: BarChart2, label: 'Analytics', path: '/analytics' },
+    { id: 'schedule', icon: Calendar, label: 'Schedule', path: '/schedule' },
+    { id: 'syllabus', icon: Library, label: 'Syllabus', path: '/syllabus' },
+    { id: 'weak-areas', icon: AlertCircle, label: 'Weak Areas', path: '/weak-areas' },
+    { id: 'achievements', icon: Trophy, label: 'Achievements', path: '/achievements' },
+    { id: 'manage', icon: Settings, label: 'Manage', path: '/manage' },
   ];
+
+  const isActive = (path: string) => {
+    if (path === '/' && location.pathname === '/') return true;
+    if (path !== '/' && location.pathname.startsWith(path)) return true;
+    return false;
+  };
 
   const containerVariants = {
     hidden: { opacity: 0, x: -20 },
@@ -42,59 +56,136 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
         initial="hidden"
         animate="show"
         variants={containerVariants}
-        className="hidden md:flex flex-col w-64 bg-black border-r border-white/10 h-full p-4 shrink-0"
+        className={cn(
+          "hidden md:flex flex-col bg-black border-r border-white/10 h-full shrink-0 transition-all duration-500 ease-in-out relative group/sidebar overflow-y-auto scrollbar-hide",
+          isCollapsed ? "w-20 p-3" : "w-64 p-4"
+        )}
       >
-        <motion.div variants={itemVariants} className="flex items-center gap-2 mb-8 px-2">
-          <div className="w-8 h-8 bg-[#1DB954] rounded-full flex items-center justify-center">
-            <div className="w-4 h-4 bg-black rounded-full" />
+        {/* Collapse Toggle */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="absolute -right-3 top-20 w-6 h-6 bg-[#1DB954] rounded-full flex items-center justify-center text-black shadow-xl opacity-0 group-hover/sidebar:opacity-100 transition-opacity z-50 hover:scale-110 active:scale-90"
+        >
+          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
+
+        <motion.div variants={itemVariants} className={cn("flex items-center gap-3 mb-8 px-2", isCollapsed && "justify-center px-0")}>
+          <div className="w-11 h-11 bg-[#1DB954] rounded-full flex items-center justify-center shrink-0 shadow-[0_0_20px_rgba(29,185,84,0.3)] group-hover/sidebar:shadow-[0_0_40px_rgba(29,185,84,0.6)] transition-all duration-700 hover:scale-110 active:scale-95 cursor-pointer">
+            <Logo className="w-7 h-7 text-black" />
           </div>
-          <span className="text-xl font-bold tracking-tight">StudyFlow</span>
+          {!isCollapsed && (
+            <motion.span 
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="text-xl font-black tracking-tighter bg-gradient-to-r from-white to-gray-500 bg-clip-text text-transparent"
+            >
+              StudyFlow
+            </motion.span>
+          )}
         </motion.div>
 
-        <nav className="space-y-2 flex-1">
+        <nav className="space-y-1.5 flex-1">
           {menuItems.map((item) => (
-            <motion.button
+            <Link
               key={item.id}
-              variants={itemVariants}
-              whileHover={{ x: 4 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setActiveTab(item.id)}
+              to={item.path}
               className={cn(
-                "w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-200 group",
-                activeTab === item.id
-                  ? "bg-white/10 text-white"
-                  : "text-gray-400 hover:text-white hover:bg-white/5"
+                "w-full flex items-center gap-4 px-3 py-3 rounded-xl transition-all duration-300 group relative",
+                isActive(item.path)
+                  ? "bg-white/10 text-white shadow-inner"
+                  : "text-gray-400 hover:text-white"
               )}
+              title={isCollapsed ? item.label : undefined}
             >
+              {isActive(item.path) && (
+                <motion.div 
+                  layoutId="active-pill"
+                  className="absolute left-0 w-1 h-6 bg-[#1DB954] rounded-r-full shadow-[0_0_10px_rgba(29,185,84,0.5)]"
+                />
+              )}
               <item.icon className={cn(
-                "w-5 h-5",
-                activeTab === item.id ? "text-[#1DB954]" : "group-hover:text-[#1DB954]"
+                "w-5 h-5 shrink-0 transition-colors duration-300",
+                isActive(item.path) ? "text-[#1DB954]" : "group-hover:text-[#1DB954]"
               )} />
-              <span className="font-medium">{item.label}</span>
-            </motion.button>
+              <AnimatePresence mode="wait">
+                {!isCollapsed && (
+                  <motion.span 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className={cn(
+                      "font-bold text-sm tracking-tight whitespace-nowrap",
+                      isActive(item.path) ? "text-white" : "text-gray-400"
+                    )}
+                  >
+                    {item.label}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </Link>
           ))}
         </nav>
 
         <motion.div variants={itemVariants} className="mt-auto pt-4 border-t border-white/10">
-          <div className="bg-white/5 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-gray-500">Your Library</span>
-              <Plus className="w-4 h-4 text-gray-400 hover:text-white cursor-pointer" />
-            </div>
-            <div className="space-y-3">
-              {['Combined Maths', 'Physics', 'Chemistry'].map((subject) => (
-                <motion.div 
-                  key={subject} 
-                  whileHover={{ x: 4 }}
-                  className="flex items-center gap-3 group cursor-pointer"
+          <div className={cn(
+            "bg-white/5 rounded-2xl transition-all duration-300", 
+            isCollapsed ? "p-2" : "p-4"
+          )}>
+            {!isCollapsed && (
+              <div className="flex items-center justify-between mb-4 px-1">
+                <div className="flex items-center gap-2">
+                  <Library className="w-4 h-4 text-gray-500" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Your Library</span>
+                </div>
+                <motion.button 
+                  whileHover={{ scale: 1.1, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-1 hover:bg-white/10 rounded-full transition-colors"
                 >
-                  <div className="w-10 h-10 bg-gradient-to-br from-gray-700 to-gray-900 rounded-lg flex items-center justify-center text-xs font-bold text-gray-400 group-hover:text-white transition-colors">
-                    {subject[0]}
+                  <Plus className="w-4 h-4 text-gray-400" />
+                </motion.button>
+              </div>
+            )}
+            <div className={cn("space-y-1", isCollapsed && "space-y-4 flex flex-col items-center")}>
+              {subjects.map((subject) => (
+                <motion.div 
+                  key={subject.id} 
+                  whileHover={{ x: isCollapsed ? 0 : 4, scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => onSubjectClick(subject.id)}
+                  className={cn(
+                    "flex items-center gap-3 group cursor-pointer p-1.5 rounded-xl hover:bg-white/10 transition-all border border-transparent", 
+                    isCollapsed && "justify-center p-0 w-14 h-14 hover:border-[#1DB954]/50 hover:shadow-[0_0_15px_rgba(29,185,84,0.3)]"
+                  )}
+                  title={isCollapsed ? subject.name : undefined}
+                >
+                  <div className={cn(
+                    "rounded-xl flex items-center justify-center text-xs font-black text-white transition-all shadow-lg shrink-0 overflow-hidden relative",
+                    isCollapsed ? "w-14 h-14" : "w-10 h-10"
+                  )}>
+                    <ImageWithFallback
+                      src={subject.image}
+                      alt={subject.name}
+                      containerClassName="w-full h-full"
+                      className="group-hover:scale-110 transition-transform duration-500"
+                      fallbackGradient={subject.gradient}
+                      fallbackText={subject.name[0]}
+                      showBlur={false}
+                    />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate group-hover:text-white transition-colors">{subject}</p>
-                    <p className="text-xs text-gray-500">Playlist • Sasi</p>
-                  </div>
+                  {!isCollapsed && (
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold truncate group-hover:text-[#1DB954] transition-colors">{subject.name}</p>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] text-gray-500 font-bold uppercase tracking-tighter">{subject.topics.length} Topics</span>
+                        <span className="w-1 h-1 bg-gray-700 rounded-full" />
+                        <span className={cn(
+                          "text-[9px] font-bold",
+                          subject.readiness > 70 ? "text-[#1DB954]" : "text-yellow-500"
+                        )}>{subject.readiness}% Ready</span>
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </div>
@@ -106,25 +197,36 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
       <motion.div 
         initial={{ y: 100 }}
         animate={{ y: 0 }}
-        className="md:hidden fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-lg border-t border-white/10 px-2 py-1 flex items-center overflow-x-auto scrollbar-hide z-[60] pb-safe"
+        className="md:hidden fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-2xl border-t border-white/5 px-1 py-1 flex items-center overflow-x-auto scrollbar-hide z-[60] pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.8)]"
       >
-        <div className="flex items-center justify-around min-w-full">
+        <div className="flex items-center justify-around min-w-full gap-1">
           {menuItems.map((item) => (
-            <motion.button
+            <Link
               key={item.id}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => setActiveTab(item.id)}
+              to={item.path}
               className={cn(
-                "flex flex-col items-center gap-1 p-2 min-w-[72px] transition-colors shrink-0",
-                activeTab === item.id ? "text-white" : "text-gray-500"
+                "flex flex-col items-center gap-1.5 py-3 px-1 min-w-[68px] transition-all duration-500 shrink-0 relative rounded-xl",
+                isActive(item.path) ? "text-white" : "text-gray-500 active:bg-white/5"
               )}
             >
+              {isActive(item.path) && (
+                <motion.div 
+                  layoutId="mobile-active-indicator"
+                  className="absolute inset-0 bg-white/10 rounded-xl -z-10"
+                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                />
+              )}
               <item.icon className={cn(
-                "w-5 h-5",
-                activeTab === item.id ? "text-[#1DB954]" : ""
+                "w-5 h-5 transition-all duration-500",
+                isActive(item.path) ? "text-[#1DB954] scale-110 drop-shadow-[0_0_8px_rgba(29,185,84,0.5)]" : "group-active:scale-90"
               )} />
-              <span className="text-[9px] font-bold uppercase tracking-tighter">{item.label}</span>
-            </motion.button>
+              <span className={cn(
+                "text-[8px] font-black uppercase tracking-[0.1em] transition-all duration-500",
+                isActive(item.path) ? "opacity-100 translate-y-0 text-[#1DB954]" : "opacity-40"
+              )}>
+                {item.label}
+              </span>
+            </Link>
           ))}
         </div>
       </motion.div>

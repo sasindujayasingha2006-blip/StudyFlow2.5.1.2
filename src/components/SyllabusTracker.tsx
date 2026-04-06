@@ -7,10 +7,21 @@ import { motion, AnimatePresence } from 'motion/react';
 interface SyllabusTrackerProps {
   subjects: Subject[];
   onUpdateMastery: (subjectId: string, topicId: string, mastery: number) => void;
+  highlightedSubjectId?: string;
 }
 
-export default function SyllabusTracker({ subjects, onUpdateMastery }: SyllabusTrackerProps) {
+export default function SyllabusTracker({ subjects, onUpdateMastery, highlightedSubjectId }: SyllabusTrackerProps) {
   const [selectedTopic, setSelectedTopic] = React.useState<{ subject: Subject, topic: Topic } | null>(null);
+  const subjectRefs = React.useRef<{ [key: string]: HTMLDivElement | null }>({});
+
+  React.useEffect(() => {
+    if (highlightedSubjectId && subjectRefs.current[highlightedSubjectId]) {
+      subjectRefs.current[highlightedSubjectId]?.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }
+  }, [highlightedSubjectId]);
 
   return (
     <div className="p-4 md:p-8 space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -37,7 +48,14 @@ export default function SyllabusTracker({ subjects, onUpdateMastery }: SyllabusT
 
       <div className="grid grid-cols-1 gap-8">
         {subjects.map((subject) => (
-          <div key={subject.id} className="bg-[#181818] rounded-3xl border border-white/5 overflow-hidden">
+          <div 
+            key={subject.id} 
+            ref={el => { subjectRefs.current[subject.id] = el; }}
+            className={cn(
+              "bg-[#181818] rounded-3xl border overflow-hidden transition-all duration-500",
+              highlightedSubjectId === subject.id ? "border-[#1DB954] shadow-[0_0_30px_rgba(29,185,84,0.1)] scale-[1.01]" : "border-white/5"
+            )}
+          >
             <div className={cn("p-6 flex items-center justify-between bg-gradient-to-r", subject.gradient)}>
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur-md border border-white/10">

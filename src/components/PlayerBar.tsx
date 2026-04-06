@@ -3,31 +3,57 @@ import { Play, Pause, SkipBack, SkipForward, Repeat, Shuffle, Volume2, Maximize2
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 
+import { Subject } from '../types';
+
 interface PlayerBarProps {
-  currentSubject: string;
-  progress: number;
-  timeElapsed: string;
-  totalTime?: string;
-  onToggleFocus: () => void;
-  isPlaying?: boolean;
-  onTogglePlay?: () => void;
+  activeSession: {
+    subjectId: string;
+    topicId: string;
+    elapsedSeconds: number;
+    totalSeconds: number;
+  } | null;
+  isPaused: boolean;
+  onTogglePause: () => void;
+  onStop: () => void;
+  onOpenFocus: () => void;
+  subjects: Subject[];
+  className?: string;
 }
 
 export default function PlayerBar({ 
-  currentSubject, 
-  progress, 
-  timeElapsed, 
-  totalTime = '90:00',
-  onToggleFocus,
-  isPlaying = false,
-  onTogglePlay
+  activeSession,
+  isPaused,
+  onTogglePause,
+  onStop,
+  onOpenFocus,
+  subjects,
+  className
 }: PlayerBarProps) {
+  const currentSubjectObj = subjects.find(s => s.id === activeSession?.subjectId);
+  const currentSubject = currentSubjectObj?.name || 'Select a Subject';
+  const currentSubjectImage = currentSubjectObj?.image;
+  const progress = activeSession ? (activeSession.elapsedSeconds / activeSession.totalSeconds) * 100 : 0;
+  const isPlaying = activeSession && !isPaused;
+
+  const timeElapsed = activeSession ? (() => {
+    const mins = Math.floor(activeSession.elapsedSeconds / 60);
+    const secs = activeSession.elapsedSeconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  })() : '0:00';
+
+  const totalTime = activeSession ? (() => {
+    const mins = Math.floor(activeSession.totalSeconds / 60);
+    const secs = activeSession.totalSeconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  })() : '1:30:00';
+
   const [isLiked, setIsLiked] = useState(false);
   const [volume, setVolume] = useState(70);
   const [isMuted, setIsMuted] = useState(false);
   const [isHoveringProgress, setIsHoveringProgress] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const VolumeIcon = isMuted || volume === 0 ? VolumeX : volume < 50 ? Volume1 : Volume2;
 
@@ -41,7 +67,6 @@ export default function PlayerBar({
 
   const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // In a real app, this would trigger a seek in the audio/timer service
-    // For now, we'll just show a toast or visual feedback if needed
   };
 
   return (
@@ -53,7 +78,7 @@ export default function PlayerBar({
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           onClick={() => setIsCollapsed(false)}
-          className="fixed bottom-24 right-6 h-12 px-4 bg-[#1DB954] text-black rounded-full flex items-center gap-3 shadow-[0_10px_30px_rgba(29,185,84,0.3)] z-[110] cursor-pointer hover:scale-105 transition-transform group"
+          className={cn("fixed bottom-24 right-6 h-12 px-4 bg-[#1DB954] text-black rounded-full flex items-center gap-3 shadow-[0_10px_30px_rgba(29,185,84,0.3)] z-[110] cursor-pointer hover:scale-105 transition-transform group", className)}
         >
           <div className="relative w-6 h-6">
             <AnimatePresence mode="wait">
@@ -80,20 +105,23 @@ export default function PlayerBar({
           animate={{ y: 0 }}
           exit={{ y: 100, opacity: 0 }}
           layoutId="player-container"
-          className="fixed bottom-0 left-0 right-0 h-20 md:h-24 bg-black/95 backdrop-blur-md border-t border-white/5 px-4 flex items-center justify-between z-[100] shadow-[0_-10px_30px_rgba(0,0,0,0.5)]"
+          className={cn("fixed bottom-0 left-0 right-0 h-20 md:h-24 bg-black/95 backdrop-blur-md border-t border-white/5 px-4 flex items-center justify-between z-[100] shadow-[0_-10px_30px_rgba(0,0,0,0.5)]", className)}
         >
           {/* Subject Info */}
           <div className="flex items-center gap-3 md:gap-4 w-[30%] min-w-0">
             <motion.div 
               whileHover={{ scale: 1.05 }}
-              className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-gray-800 to-black rounded-md flex items-center justify-center shadow-2xl overflow-hidden shrink-0 border border-white/10"
+              className="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-gray-800 to-black rounded-md flex items-center justify-center shadow-2xl overflow-hidden shrink-0 border border-white/10 relative"
             >
+              {!isLoaded && <div className="absolute inset-0 bg-white/5 animate-pulse" />}
               <img 
-                src={`https://picsum.photos/seed/${currentSubject}/100/100`} 
+                src={currentSubjectImage || `https://picsum.photos/seed/${currentSubject}/100/100`} 
                 alt={currentSubject}
+                onLoad={() => setIsLoaded(true)}
+                onError={() => setIsLoaded(true)}
                 className={cn(
                   "w-full h-full object-cover transition-all duration-700",
-                  isPlaying ? "scale-110 opacity-80" : "scale-100 opacity-40 grayscale"
+                  isLoaded ? (isPlaying ? "scale-110 opacity-80" : "scale-100 opacity-40 grayscale") : "opacity-0 scale-110"
                 )}
                 referrerPolicy="no-referrer"
               />
@@ -128,29 +156,29 @@ export default function PlayerBar({
 
           {/* Controls */}
           <div className="flex flex-col items-center gap-1.5 md:gap-2 flex-1 max-w-[45%]">
-            <div className="flex items-center gap-3 md:gap-6">
-              <button className="text-gray-400 hover:text-white transition-colors hidden md:block p-1">
+            <div className="flex items-center gap-4 md:gap-6">
+              <button className="text-gray-400 hover:text-white transition-colors hidden md:block p-2">
                 <Shuffle className="w-4 h-4" />
               </button>
-              <button className="text-gray-400 hover:text-white transition-colors p-1">
-                <SkipBack className="w-4 h-4 md:w-5 md:h-5 fill-current" />
+              <button className="text-gray-400 hover:text-white transition-colors p-2 md:p-1">
+                <SkipBack className="w-5 h-5 md:w-5 md:h-5 fill-current" />
               </button>
               <motion.button 
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                onClick={onTogglePlay}
-                className="w-8 h-8 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-[#1DB954] transition-colors group"
+                onClick={onTogglePause}
+                className="w-11 h-11 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-[#1DB954] transition-colors group"
               >
-                {isPlaying ? (
-                  <Pause className="w-4 h-4 md:w-5 md:h-5 text-black fill-current group-hover:text-black" />
+                {!isPaused ? (
+                  <Pause className="w-5 h-5 md:w-5 md:h-5 text-black fill-current group-hover:text-black" />
                 ) : (
-                  <Play className="w-4 h-4 md:w-5 md:h-5 text-black fill-current ml-0.5 md:ml-1 group-hover:text-black" />
+                  <Play className="w-5 h-5 md:w-5 md:h-5 text-black fill-current ml-0.5 md:ml-1 group-hover:text-black" />
                 )}
               </motion.button>
-              <button className="text-gray-400 hover:text-white transition-colors p-1">
-                <SkipForward className="w-4 h-4 md:w-5 md:h-5 fill-current" />
+              <button className="text-gray-400 hover:text-white transition-colors p-2 md:p-1">
+                <SkipForward className="w-5 h-5 md:w-5 md:h-5 fill-current" />
               </button>
-              <button className="text-gray-400 hover:text-white transition-colors hidden md:block p-1">
+              <button className="text-gray-400 hover:text-white transition-colors hidden md:block p-2">
                 <Repeat className="w-4 h-4" />
               </button>
             </div>
@@ -185,7 +213,7 @@ export default function PlayerBar({
           {/* Extra Controls */}
           <div className="flex items-center justify-end gap-1 md:gap-3 w-[25%]">
             <button 
-              onClick={onToggleFocus}
+              onClick={onOpenFocus}
               className="p-2 text-gray-400 hover:text-[#1DB954] hover:bg-white/5 rounded-full transition-all hidden sm:flex"
               title="Focus Mode"
             >
@@ -240,17 +268,20 @@ export default function PlayerBar({
           layoutId="player-container"
           drag
           dragConstraints={{ left: -window.innerWidth + 300, right: 0, top: -window.innerHeight + 200, bottom: 0 }}
-          className="fixed bottom-24 right-6 w-64 bg-[#181818] border border-white/10 rounded-2xl p-4 shadow-2xl z-[110] cursor-move group/mini"
+          className={cn("fixed bottom-24 right-6 w-64 bg-[#181818] border border-white/10 rounded-2xl p-4 shadow-2xl z-[110] cursor-move group/mini", className)}
         >
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-12 h-12 bg-gradient-to-br from-gray-800 to-black rounded-lg overflow-hidden shrink-0 border border-white/10">
+              <div className="w-12 h-12 bg-gradient-to-br from-gray-800 to-black rounded-lg overflow-hidden shrink-0 border border-white/10 relative">
+                {!isLoaded && <div className="absolute inset-0 bg-white/5 animate-pulse" />}
                 <img 
-                  src={`https://picsum.photos/seed/${currentSubject}/100/100`} 
+                  src={currentSubjectImage || `https://picsum.photos/seed/${currentSubject}/100/100`} 
                   alt={currentSubject}
+                  onLoad={() => setIsLoaded(true)}
+                  onError={() => setIsLoaded(true)}
                   className={cn(
                     "w-full h-full object-cover transition-all duration-700",
-                    isPlaying ? "scale-110 opacity-80" : "scale-100 opacity-40 grayscale"
+                    isLoaded ? (isPlaying ? "scale-110 opacity-80" : "scale-100 opacity-40 grayscale") : "opacity-0 scale-110"
                   )}
                   referrerPolicy="no-referrer"
                 />
@@ -279,24 +310,24 @@ export default function PlayerBar({
           </div>
 
           <div className="space-y-3">
-            <div className="flex items-center justify-center gap-4">
-              <button className="text-gray-400 hover:text-white transition-colors">
-                <SkipBack className="w-4 h-4 fill-current" />
+            <div className="flex items-center justify-center gap-6">
+              <button className="text-gray-400 hover:text-white transition-colors p-2">
+                <SkipBack className="w-5 h-5 fill-current" />
               </button>
               <motion.button 
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                onClick={onTogglePlay}
-                className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-[#1DB954] transition-colors group"
+                onClick={onTogglePause}
+                className="w-11 h-11 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-[#1DB954] transition-colors group"
               >
-                {isPlaying ? (
-                  <Pause className="w-4 h-4 text-black fill-current" />
+                {!isPaused ? (
+                  <Pause className="w-5 h-5 text-black fill-current" />
                 ) : (
-                  <Play className="w-4 h-4 text-black fill-current ml-0.5" />
+                  <Play className="w-5 h-5 text-black fill-current ml-0.5" />
                 )}
               </motion.button>
-              <button className="text-gray-400 hover:text-white transition-colors">
-                <SkipForward className="w-4 h-4 fill-current" />
+              <button className="text-gray-400 hover:text-white transition-colors p-2">
+                <SkipForward className="w-5 h-5 fill-current" />
               </button>
             </div>
 

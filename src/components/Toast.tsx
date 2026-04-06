@@ -13,28 +13,28 @@ export interface Toast {
 
 interface ToastProps {
   toasts: Toast[];
-  onClose: (id: string) => void;
+  onRemove: (id: string) => void;
 }
 
-export default function ToastContainer({ toasts, onClose }: ToastProps) {
+export default function ToastContainer({ toasts, onRemove }: ToastProps) {
   return (
     <div className="fixed top-24 right-6 z-[200] flex flex-col gap-3 pointer-events-none">
       <AnimatePresence>
         {toasts.map((toast) => (
-          <ToastItem key={toast.id} toast={toast} onClose={onClose} />
+          <ToastItem key={toast.id} toast={toast} onRemove={onRemove} />
         ))}
       </AnimatePresence>
     </div>
   );
 }
 
-function ToastItem({ toast, onClose }: { toast: Toast; onClose: (id: string) => void }) {
+function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: string) => void }) {
   useEffect(() => {
     const timer = setTimeout(() => {
-      onClose(toast.id);
+      onRemove(toast.id);
     }, 5000);
     return () => clearTimeout(timer);
-  }, [toast.id, onClose]);
+  }, [toast.id, onRemove]);
 
   const icons = {
     success: <CheckCircle2 className="w-5 h-5 text-[#1DB954]" />,
@@ -63,7 +63,7 @@ function ToastItem({ toast, onClose }: { toast: Toast; onClose: (id: string) => 
       <div className="shrink-0">{icons[toast.type]}</div>
       <p className="text-sm font-medium text-white flex-1">{toast.message}</p>
       <button
-        onClick={() => onClose(toast.id)}
+        onClick={() => onRemove(toast.id)}
         className="p-1 hover:bg-white/10 rounded-full transition-colors text-gray-400 hover:text-white"
       >
         <X className="w-4 h-4" />

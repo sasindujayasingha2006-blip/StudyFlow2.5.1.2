@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Search, Bell, User, Zap, PlusCircle, X, Star, Flame, LogOut, LogIn } from 'lucide-react';
+import { Search, Bell, User, Zap, PlusCircle, X, Star, Flame, LogOut, LogIn, ListMusic } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { User as FirebaseUser } from 'firebase/auth';
+import { cn } from '../lib/utils';
 
 interface TopBarProps {
   onAutoPlan: () => void;
@@ -14,9 +15,24 @@ interface TopBarProps {
   user: FirebaseUser | null;
   onLogin: () => void;
   onLogout: () => void;
+  onToggleNowPlaying: () => void;
+  isNowPlayingOpen: boolean;
 }
 
-export default function TopBar({ onAutoPlan, onLogSession, onStartFocus, searchQuery, onSearchChange, points, streak, user, onLogin, onLogout }: TopBarProps) {
+export default function TopBar({ 
+  onAutoPlan, 
+  onLogSession, 
+  onStartFocus, 
+  searchQuery, 
+  onSearchChange, 
+  points, 
+  streak, 
+  user, 
+  onLogin, 
+  onLogout,
+  onToggleNowPlaying,
+  isNowPlayingOpen
+}: TopBarProps) {
   const [isSearchVisible, setIsSearchVisible] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
@@ -28,51 +44,51 @@ export default function TopBar({ onAutoPlan, onLogSession, onStartFocus, searchQ
   };
 
   return (
-    <div className="flex items-center justify-between p-4 md:p-6 bg-black/40 backdrop-blur-md sticky top-0 z-40">
+    <div className="flex items-center justify-between p-4 md:p-6 bg-black/40 backdrop-blur-xl sticky top-0 z-40 pt-safe border-b border-white/5">
       <div className="flex items-center gap-4 flex-1">
         {/* Desktop Search */}
-        <div className="relative max-w-md w-full hidden md:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <div className="relative max-w-md w-full hidden md:block group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 group-focus-within:text-[#1DB954] transition-colors" />
           <input
             type="text"
             placeholder="Search for subjects, topics, or papers"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full bg-white/10 border-none rounded-full py-2 pl-10 pr-4 text-sm focus:ring-2 focus:ring-[#1DB954] transition-all"
+            className="w-full bg-white/5 border border-white/5 hover:border-white/10 rounded-full py-2.5 pl-11 pr-4 text-sm focus:ring-2 focus:ring-[#1DB954]/50 focus:bg-white/10 transition-all outline-none"
           />
         </div>
 
         {/* Mobile Search Toggle */}
-        <div className="md:hidden flex items-center gap-2">
+        <div className="md:hidden flex items-center gap-3">
           {!isSearchVisible ? (
             <>
-              <h1 className="text-xl font-bold truncate">{greeting()}</h1>
+              <h1 className="text-xl font-black tracking-tight truncate">{greeting()}</h1>
               <motion.button 
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setIsSearchVisible(true)}
-                className="p-2 bg-white/5 rounded-full"
+                className="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full border border-white/5 active:bg-white/10 transition-colors"
               >
                 <Search className="w-5 h-5 text-gray-400" />
               </motion.button>
             </>
           ) : (
-            <div className="flex items-center gap-2 w-full animate-in slide-in-from-left-2 duration-200">
+            <div className="flex items-center gap-2 w-full animate-in slide-in-from-left-4 duration-300 ease-out">
               <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   autoFocus
                   type="text"
                   placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
-                  className="w-full bg-white/10 border-none rounded-full py-1.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-[#1DB954]"
+                  className="w-full h-10 bg-white/10 border-none rounded-full py-1.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-[#1DB954] outline-none"
                 />
               </div>
               <motion.button 
                 whileTap={{ scale: 0.8 }}
                 onClick={() => setIsSearchVisible(false)} 
-                className="p-1"
+                className="w-10 h-10 flex items-center justify-center bg-white/5 rounded-full"
               >
                 <X className="w-5 h-5 text-gray-400" />
               </motion.button>
@@ -82,15 +98,15 @@ export default function TopBar({ onAutoPlan, onLogSession, onStartFocus, searchQ
       </div>
 
       {!isSearchVisible && (
-        <div className="flex items-center gap-1.5 md:gap-4 ml-2">
+        <div className="flex items-center gap-2 md:gap-4 ml-2">
           <motion.button
             whileHover={{ scale: 1.05, backgroundColor: 'rgba(255, 255, 255, 0.15)' }}
             whileTap={{ scale: 0.95 }}
             onClick={onLogSession}
-            className="flex items-center justify-center w-8 h-8 md:w-auto md:px-4 md:py-2 bg-white/10 rounded-full text-sm font-bold transition-all"
+            className="flex items-center justify-center w-11 h-11 md:w-auto md:px-4 md:py-2 bg-white/10 rounded-full text-sm font-bold transition-all"
             title="Log Session"
           >
-            <PlusCircle className="w-4 h-4" />
+            <PlusCircle className="w-5 h-5 md:w-4 md:h-4" />
             <span className="hidden lg:inline ml-2">Log Session</span>
           </motion.button>
 
@@ -98,10 +114,10 @@ export default function TopBar({ onAutoPlan, onLogSession, onStartFocus, searchQ
             whileHover={{ scale: 1.05, backgroundColor: 'rgba(29, 185, 84, 0.15)' }}
             whileTap={{ scale: 0.95 }}
             onClick={onStartFocus}
-            className="flex items-center justify-center w-8 h-8 md:w-auto md:px-4 md:py-2 bg-[#1DB954]/10 text-[#1DB954] rounded-full text-sm font-bold transition-all border border-[#1DB954]/20"
+            className="flex items-center justify-center w-11 h-11 md:w-auto md:px-4 md:py-2 bg-[#1DB954]/10 text-[#1DB954] rounded-full text-sm font-bold transition-all border border-[#1DB954]/20"
             title="Focus"
           >
-            <Zap className="w-4 h-4" />
+            <Zap className="w-5 h-5 md:w-4 md:h-4" />
             <span className="hidden lg:inline ml-2">Focus</span>
           </motion.button>
 
@@ -109,7 +125,7 @@ export default function TopBar({ onAutoPlan, onLogSession, onStartFocus, searchQ
             whileHover={{ scale: 1.05, backgroundColor: '#1ed760' }}
             whileTap={{ scale: 0.95 }}
             onClick={onAutoPlan}
-            className="px-3 py-1.5 md:px-6 md:py-2 bg-[#1DB954] text-black rounded-full text-[10px] md:text-sm font-bold transition-all transform whitespace-nowrap"
+            className="h-11 px-3 md:px-6 md:py-2 bg-[#1DB954] text-black rounded-full text-[10px] md:text-sm font-bold transition-all transform whitespace-nowrap"
           >
             Auto Plan
           </motion.button>
@@ -144,6 +160,19 @@ export default function TopBar({ onAutoPlan, onLogSession, onStartFocus, searchQ
           </motion.div>
 
           <div className="flex items-center gap-2 md:gap-4">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={onToggleNowPlaying}
+              className={cn(
+                "p-2 rounded-full transition-all hidden md:flex",
+                isNowPlayingOpen ? "text-[#1DB954] bg-[#1DB954]/10" : "text-gray-400 hover:text-white hover:bg-white/5"
+              )}
+              title="Now Playing View"
+            >
+              <ListMusic className="w-5 h-5" />
+            </motion.button>
+
             {user ? (
               <div className="relative">
                 <motion.button 

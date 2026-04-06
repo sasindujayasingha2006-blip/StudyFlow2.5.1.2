@@ -3,10 +3,11 @@ import { Zap, MoreVertical, TrendingUp, AlertTriangle, CheckCircle2 } from 'luci
 import { Subject } from '../types';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
+import ImageWithFallback from './ImageWithFallback';
 
 interface SubjectCardProps {
   subject: Subject;
-  onStartFocus: (subjectId: string) => void;
+  onStartFocus: (subjectId: string, topicId?: string) => void;
 }
 
 export default function SubjectCard({ subject, onStartFocus }: SubjectCardProps) {
@@ -32,19 +33,23 @@ export default function SubjectCard({ subject, onStartFocus }: SubjectCardProps)
 
   return (
     <motion.div 
-      whileHover={{ scale: 1.02, y: -4 }}
+      whileHover={{ scale: 1.02, y: -4, borderColor: 'rgba(29, 185, 84, 0.3)' }}
       whileTap={{ scale: 0.98 }}
-      className="group relative bg-[#181818] rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 transition-all duration-300 shadow-2xl"
+      className="group relative bg-[#181818] rounded-2xl overflow-hidden border border-white/5 transition-all duration-500 shadow-2xl"
     >
       {/* Background Image & Gradient */}
       <div className="absolute inset-0 z-0">
-        <img 
-          src={subject.image || `https://picsum.photos/seed/${subject.id}/800/600`}
+        <ImageWithFallback
+          src={subject.image}
           alt={subject.name}
-          className="w-full h-full object-cover opacity-30 group-hover:opacity-50 transition-opacity duration-500"
-          referrerPolicy="no-referrer"
+          containerClassName="w-full h-full"
+          className="opacity-30 group-hover:opacity-50 transition-opacity duration-700"
+          fallbackGradient={subject.gradient}
+          fallbackText={subject.name[0]}
         />
-        <div className={cn("absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/80 to-transparent opacity-90", subject.gradient)} />
+        <div className={cn("absolute inset-0 bg-gradient-to-t from-[#121212] via-[#121212]/80 to-transparent opacity-90")} />
+        {/* Aesthetic Overlay */}
+        <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
       </div>
 
       <div className="relative z-10 p-6 flex flex-col h-full min-h-[280px]">
@@ -62,8 +67,8 @@ export default function SubjectCard({ subject, onStartFocus }: SubjectCardProps)
         </div>
 
         <div className="flex-1">
-          <h3 className="text-2xl font-bold mb-1 group-hover:text-[#1DB954] transition-colors">{subject.name}</h3>
-          <p className="text-sm text-gray-400 mb-6">{subject.topics.length} Topics • {subject.weakCount} Weak Areas</p>
+          <h3 className="text-xl md:text-2xl font-bold mb-1 group-hover:text-[#1DB954] transition-colors">{subject.name}</h3>
+          <p className="text-xs md:text-sm text-gray-400 mb-6">{subject.topics.length} Topics • {subject.weakCount} Weak Areas</p>
           
           <div className="flex items-center gap-4 mb-6">
             <div className="relative w-16 h-16">
@@ -116,17 +121,39 @@ export default function SubjectCard({ subject, onStartFocus }: SubjectCardProps)
               </div>
             </div>
           </div>
+
+          {/* Quick Links Section */}
+          <div className="mb-6 space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 mb-2">Quick Links</p>
+            <div className="space-y-1.5">
+              {subject.topics.slice(0, 3).map((topic) => (
+                <button
+                  key={topic.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStartFocus(subject.id, topic.id);
+                  }}
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-[#1DB954]/10 border border-transparent hover:border-[#1DB954]/20 transition-all group/link"
+                >
+                  <span className="text-[11px] font-bold text-gray-400 group-hover/link:text-white truncate pr-2">
+                    {topic.title}
+                  </span>
+                  <Zap className="w-3 h-3 text-gray-700 group-hover/link:text-[#1DB954] shrink-0 transition-colors" />
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center gap-3 mt-auto">
           <button 
             onClick={() => onStartFocus(subject.id)}
-            className="flex-1 flex items-center justify-center gap-2 py-3 bg-white text-black rounded-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-xl"
+            className="flex-1 flex items-center justify-center gap-2 h-11 md:h-12 bg-white text-black rounded-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-xl"
           >
             <Zap className="w-4 h-4 fill-current" />
             Focus
           </button>
-          <button className="w-12 h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-xl transition-all">
+          <button className="w-11 h-11 md:w-12 md:h-12 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-xl transition-all">
             <TrendingUp className="w-5 h-5" />
           </button>
         </div>

@@ -6,16 +6,50 @@ import { cn } from '../lib/utils';
 
 interface WeeklyScheduleViewProps {
   schedule: WeeklySchedule;
+  onManageSchedule: () => void;
 }
 
-export default function WeeklyScheduleView({ schedule }: WeeklyScheduleViewProps) {
+export default function WeeklyScheduleView({ schedule, onManageSchedule }: WeeklyScheduleViewProps) {
   const days: (keyof WeeklySchedule)[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
   return (
     <div className="p-4 md:p-8 space-y-12 pb-32">
-      <div className="flex flex-col gap-2">
-        <h2 className="text-4xl font-black tracking-tight">Weekly Schedule</h2>
-        <p className="text-gray-400">Your optimized study routine for the week.</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-4xl font-black tracking-tight">Weekly Schedule</h2>
+          <p className="text-gray-400">Your optimized study routine for the week.</p>
+        </div>
+        <button 
+          onClick={onManageSchedule}
+          className="px-6 py-3 bg-white text-black rounded-full font-bold hover:scale-105 transition-all shadow-xl flex items-center gap-2"
+        >
+          <Zap className="w-4 h-4 fill-current" />
+          Manage Schedule
+        </button>
+      </div>
+
+      {/* Tuition Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {days.map(day => {
+          const tuitionSessions = schedule[day].filter(a => a.type === 'tuition');
+          if (tuitionSessions.length === 0) return null;
+          return (
+            <div key={`summary-${day}`} className="bg-[#181818] p-4 rounded-2xl border border-blue-500/20">
+              <div className="flex items-center gap-2 mb-3">
+                <Zap className="w-4 h-4 text-blue-500" />
+                <h3 className="font-bold text-sm">{day} Tuition</h3>
+              </div>
+              <div className="space-y-2">
+                {tuitionSessions.map(s => (
+                  <div key={s.id} className="flex items-center justify-between text-xs">
+                    <span className="text-gray-400 font-medium">{s.description}</span>
+                    <span className="text-blue-500 font-bold tabular-nums">{s.time.split(' – ')[0]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="flex lg:grid lg:grid-cols-7 overflow-x-auto pb-8 scrollbar-hide gap-6 snap-x snap-mandatory">
